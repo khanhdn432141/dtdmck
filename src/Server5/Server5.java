@@ -79,8 +79,7 @@ public class Server5 {
                     String message = re.getMessage();
                     MESSAGE = message;
                     String jeton;
-                    
-                    Server5.log("Thông nhận được :\n" + "start: " + st + "\n" + "jeton: " + je + "\n"
+Server5.log("Thông nhận được :\n" + "start: " + st + "\n" + "jeton: " + je + "\n"
                             + "lamport: " + lamport + "\n" + "servername: " + name + "\n"
                             + "type: " + type + "\n" + "action: " + action + "\n" + "vòng đk: " + circle + "\n"
                             + "thông điệp: " + message + "\n");
@@ -151,7 +150,7 @@ public class Server5 {
                         Server5.log("Kết thúc quá trình cập nhật, kiểm tra đồng bộ hóa TT và Quay vòng ngược.\n\n");
                         stt = 1;
                         act += 1;
-                        try {
+try {
                             int tam = pos - 2;
                             if (tam < 0) {
                                 tam = 2;
@@ -204,8 +203,7 @@ public class Server5 {
                             con.shutdown();
                         }
                     }
-
-                    // quay vong nguoc lai cua thong diep locked
+// quay vong nguoc lai cua thong diep locked
                     if (type.equals("Locked") && (start == 4)) {
                         int stt = start;
                         Server5.log("Kết thúc khóa trường dữ liệu, tạo bảng tạm và Quay vòng ngược.\n\n");
@@ -261,7 +259,7 @@ public class Server5 {
                         try {
                             Connect co = new Connect(rount.table[vt].destination, rount.table[vt].port,
                                     rount.table[vt].name);
-                            co.connect();
+co.connect();
                             co.requestServer("@$" + start + "|" + t + "|" + lamport + "|" + rount.table[pos - 1].name
                                     + "|" + "Locked" + "|" + act + "|" + circle + "$$" + message + "$@");
                             co.shutdown();
@@ -312,7 +310,7 @@ public class Server5 {
 
                     // Xu ly thong diep temp
                     if (type.equals("Temped") && (start != 4)) {
-                        Server5.log("Chuyển thông điệp, thực hiện tạo bảng tạm CSDL.\n\n");
+Server5.log("Chuyển thông điệp, thực hiện tạo bảng tạm CSDL.\n\n");
                         start++;
                         try {
                             int tam = pos - 2;
@@ -364,7 +362,7 @@ public class Server5 {
                                     + "|" + type + "|" + action + "|" + circle + "$$" + message + "$@");
                             con.shutdown();
                         }
-                    } // dong if
+} // dong if
 
                     // Xu ly thong diep synchronym
                     if (type.equals("Synchronymed") && (start != 4)) {
@@ -372,6 +370,13 @@ public class Server5 {
                         start++;
                         try {
                             int tam = pos - 2;
+                            if (tam < 0) {
+                                tam = 2;
+                            }
+                            if (t.charAt(tam) == '0') {
+                                Server5.log("\nServer" + (tam + 1) + " bị sự cố do jeton nhận được là: " + t + ".\n\n");
+                                tam--;
+                            }
                             if (tam < 0) {
                                 tam = 2;
                             }
@@ -419,18 +424,24 @@ public class Server5 {
                     
                     ProcessData data = new ProcessData(MESSAGE);
                     Database db = new Database();
+
+                    // ====================================================
+                    // SỬA LỖI: Tách điều kiện SET và DEL riêng biệt
+// querySQL trả về true = ghế trống, false = ghế đã có người
+                    // SET cần ghế trống  (ktradb == true)
+                    // DEL cần ghế có người (ktradb == false)
+                    // ====================================================
                     boolean ktradb = db.querySQL(data.getPos(), data.getNum(), data.getType(), data.getColor());
-                    if (ktradb == true) {
-                        if (data.getAct().equalsIgnoreCase("SET")) {
-                            db.insertData(data.getPos(), data.getNum(), data.getType(), data.getColor(),
-                                    data.getTime());
-                        } else if (data.getAct().equalsIgnoreCase("DEL")) {
-                            db.delData(data.getPos());
-                        }
+                    if (data.getAct().equalsIgnoreCase("SET") && ktradb == true) {
+                        db.insertData(data.getPos(), data.getNum(), data.getType(), data.getColor(), data.getTime());
+                        Server5.log("Đã thêm vé ghế " + data.getPos() + " vào database.\n");
+                    } else if (data.getAct().equalsIgnoreCase("DEL") && ktradb == false) {
+                        db.delData(data.getPos());
+                        Server5.log("Đã xóa vé ghế " + data.getPos() + " khỏi database.\n");
                     }
+
                     currentCircle++;
                     hash.put(String.valueOf(currentCircle), MESSAGE);
-
                 }
             } catch (IOException e) {
             }
@@ -479,7 +490,7 @@ public class Server5 {
                             socketU.joinGroup(add2);
                             InetAddress add3 = InetAddress.getByName(address3);
                             socketU.joinGroup(add3);
-                            InetAddress add4 = InetAddress.getByName(address4);
+InetAddress add4 = InetAddress.getByName(address4);
                             socketU.joinGroup(add4);
                             InetAddress str[] = { add, add1, add2, add3, add4 };
 
@@ -533,8 +544,7 @@ public class Server5 {
                     } else if (temp.startsWith("!")) {
                         diachiSV = temp.split("-");
                         InetAddress addSV = InetAddress.getByName(diachiSV[1]);
-
-                        String m = Integer.toString(lp);
+String m = Integer.toString(lp);
                         byte ms[] = m.getBytes();
                         DatagramPacket pkSV = new DatagramPacket(ms, ms.length, addSV, portM);
                         socketU.send(pkSV);
@@ -551,11 +561,12 @@ public class Server5 {
 
     public static void main(String args[]) throws Exception {
         // --- CHÈN WEB SERVER MINI (HIỂN THỊ LOG RA NGINX) ---
-        HttpServer server = HttpServer.create(new InetSocketAddress(8080), 0);
+        // Đổi port web thành 8085 tương ứng với Server 5
+        HttpServer server = HttpServer.create(new InetSocketAddress(8085), 0);
         server.createContext("/", exchange -> {
-            // Giao diện web hiển thị log, tự động làm mới sau mỗi 2 giây
+            // Đổi màu text thành màu hồng tím (#ff00ff) để dễ phân biệt
             String response = "<html><head><meta charset='UTF-8'><meta http-equiv='refresh' content='2'></head>"
-                    + "<body style='background:#1e1e1e; color:#00ff00; font-family:monospace; padding:20px;'>"
+                    + "<body style='background:#1e1e1e; color:#ff00ff; font-family:monospace; padding:20px;'>"
                     + "<h2>MÁY CHỦ 5 - RẠP PHIM (Chạy trên Google Cloud)</h2>"
                     + "<div style='border:1px solid #444; padding:15px; height:80vh; overflow-y:auto;'>" 
                     + webLogs.toString() + "</div>"
@@ -571,7 +582,7 @@ public class Server5 {
         server.start();
         
         Server5.log("--- Hệ thống Server 5 đã sẵn sàng ---\n");
-        Server5.log("Web Monitor đang chạy tại cổng 8080...\n");
+        Server5.log("Web Monitor đang chạy tại cổng 8085...\n");
 
         // --- KHỞI CHẠY LOGIC SOCKET (Jeton) ---
         sv5 sv5s = new sv5();
